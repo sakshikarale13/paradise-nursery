@@ -1,9 +1,8 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  increaseQuantity,
-  decreaseQuantity,
-  removeFromCart,
+  removeItem,
+  updateQuantity,
 } from "../redux/CartSlice";
 
 function CartItem({ onHome, onPlants }) {
@@ -11,34 +10,70 @@ function CartItem({ onHome, onPlants }) {
 
   const cartItems = useSelector((state) => state.cart.items);
 
+  // Calculate total number of items
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   );
 
+  // Calculate total cart amount
   const totalAmount = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
 
+  // Increase quantity
+  const handleIncrease = (id, quantity) => {
+    dispatch(
+      updateQuantity({
+        id,
+        quantity: quantity + 1,
+      })
+    );
+  };
+
+  // Decrease quantity
+  const handleDecrease = (id, quantity) => {
+    if (quantity > 1) {
+      dispatch(
+        updateQuantity({
+          id,
+          quantity: quantity - 1,
+        })
+      );
+    }
+  };
+
+  // Remove item
+  const handleDelete = (id) => {
+    dispatch(removeItem(id));
+  };
+
+  // Checkout
   const handleCheckout = () => {
     alert("Checkout Coming Soon!");
   };
 
   return (
     <div style={styles.page}>
-      {/* Navbar */}
+      {/* ==================== Navbar ==================== */}
       <nav style={styles.navbar}>
         <div style={styles.logo} onClick={onHome}>
           🌿 Paradise Nursery
         </div>
 
         <div style={styles.navLinks}>
-          <button style={styles.navButton} onClick={onHome}>
+          <button
+            style={styles.navButton}
+            onClick={onHome}
+          >
             Home
           </button>
 
-          <button style={styles.navButton} onClick={onPlants}>
+          <button
+            style={styles.navButton}
+            onClick={onPlants}
+          >
             Plants
           </button>
 
@@ -48,46 +83,67 @@ function CartItem({ onHome, onPlants }) {
         </div>
       </nav>
 
-      {/* Cart Header */}
+      {/* ==================== Cart Header ==================== */}
       <div style={styles.header}>
         <h1>Shopping Cart</h1>
-        <p>Review your selected plants before checkout.</p>
+
+        <p>
+          Review your selected plants before checkout.
+        </p>
       </div>
 
+      {/* ==================== Empty Cart ==================== */}
       {cartItems.length === 0 ? (
         <div style={styles.emptyCart}>
           <h2>Your cart is empty 🌱</h2>
-          <p>Add some beautiful plants to your cart.</p>
 
-          <button style={styles.continueButton} onClick={onPlants}>
+          <p>
+            Add some beautiful plants to your cart.
+          </p>
+
+          <button
+            style={styles.continueButton}
+            onClick={onPlants}
+          >
             Continue Shopping
           </button>
         </div>
       ) : (
         <div style={styles.container}>
-          {/* Cart Items */}
+          {/* ==================== Cart Items ==================== */}
           <div style={styles.itemsContainer}>
             {cartItems.map((item) => (
-              <div style={styles.item} key={item.id}>
+              <div
+                style={styles.item}
+                key={item.id}
+              >
+                {/* Plant Image */}
                 <img
                   src={item.image}
                   alt={item.name}
                   style={styles.image}
                 />
 
+                {/* Plant Details */}
                 <div style={styles.itemDetails}>
                   <h2>{item.name}</h2>
 
+                  {/* Unit Price */}
                   <p style={styles.unitPrice}>
                     Unit Price: ₹{item.price}
                   </p>
 
+                  {/* Quantity Controls */}
                   <div style={styles.quantityRow}>
                     <button
                       style={styles.quantityButton}
                       onClick={() =>
-                        dispatch(decreaseQuantity(item.id))
+                        handleDecrease(
+                          item.id,
+                          item.quantity
+                        )
                       }
+                      disabled={item.quantity === 1}
                     >
                       −
                     </button>
@@ -99,21 +155,27 @@ function CartItem({ onHome, onPlants }) {
                     <button
                       style={styles.quantityButton}
                       onClick={() =>
-                        dispatch(increaseQuantity(item.id))
+                        handleIncrease(
+                          item.id,
+                          item.quantity
+                        )
                       }
                     >
                       +
                     </button>
                   </div>
 
+                  {/* Total Cost for This Plant */}
                   <p style={styles.itemTotal}>
-                    Total: ₹{item.price * item.quantity}
+                    Total: ₹
+                    {item.price * item.quantity}
                   </p>
 
+                  {/* Delete Button */}
                   <button
                     style={styles.deleteButton}
                     onClick={() =>
-                      dispatch(removeFromCart(item.id))
+                      handleDelete(item.id)
                     }
                   >
                     Delete
@@ -123,20 +185,23 @@ function CartItem({ onHome, onPlants }) {
             ))}
           </div>
 
-          {/* Cart Summary */}
+          {/* ==================== Order Summary ==================== */}
           <div style={styles.summary}>
             <h2>Order Summary</h2>
 
             <div style={styles.summaryRow}>
               <span>Total Items:</span>
+
               <strong>{cartCount}</strong>
             </div>
 
             <div style={styles.summaryRow}>
               <span>Total Amount:</span>
+
               <strong>₹{totalAmount}</strong>
             </div>
 
+            {/* Checkout */}
             <button
               style={styles.checkoutButton}
               onClick={handleCheckout}
@@ -144,6 +209,7 @@ function CartItem({ onHome, onPlants }) {
               Checkout
             </button>
 
+            {/* Continue Shopping */}
             <button
               style={styles.continueButton}
               onClick={onPlants}
@@ -164,6 +230,7 @@ const styles = {
     paddingBottom: "60px",
   },
 
+  // ==================== Navbar ====================
   navbar: {
     height: "70px",
     background: "#1b4332",
@@ -208,11 +275,13 @@ const styles = {
     fontWeight: "bold",
   },
 
+  // ==================== Header ====================
   header: {
     textAlign: "center",
     padding: "45px 20px 30px",
   },
 
+  // ==================== Main Container ====================
   container: {
     maxWidth: "1100px",
     margin: "0 auto",
@@ -222,6 +291,7 @@ const styles = {
     gap: "30px",
   },
 
+  // ==================== Items ====================
   itemsContainer: {
     display: "flex",
     flexDirection: "column",
@@ -250,8 +320,10 @@ const styles = {
 
   unitPrice: {
     color: "#555",
+    fontSize: "16px",
   },
 
+  // ==================== Quantity ====================
   quantityRow: {
     display: "flex",
     alignItems: "center",
@@ -278,8 +350,10 @@ const styles = {
   itemTotal: {
     fontWeight: "bold",
     color: "#2d6a4f",
+    fontSize: "17px",
   },
 
+  // ==================== Delete ====================
   deleteButton: {
     border: "none",
     background: "#d62828",
@@ -289,6 +363,7 @@ const styles = {
     cursor: "pointer",
   },
 
+  // ==================== Summary ====================
   summary: {
     background: "white",
     borderRadius: "12px",
@@ -304,6 +379,7 @@ const styles = {
     fontSize: "17px",
   },
 
+  // ==================== Checkout ====================
   checkoutButton: {
     width: "100%",
     padding: "13px",
@@ -317,6 +393,7 @@ const styles = {
     marginBottom: "12px",
   },
 
+  // ==================== Continue Shopping ====================
   continueButton: {
     padding: "12px 20px",
     border: "none",
@@ -328,6 +405,7 @@ const styles = {
     cursor: "pointer",
   },
 
+  // ==================== Empty Cart ====================
   emptyCart: {
     textAlign: "center",
     padding: "80px 20px",
